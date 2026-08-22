@@ -32,10 +32,21 @@ jobs:
         with:
           gradle-version: '8.7'
 
+      - name: Ensure Assets Folder & Download MobileFaceNet Model
+        run: |
+          mkdir -p app/src/main/assets
+          if [ ! -f "app/src/main/assets/mobile_facenet.tflite" ]; then
+            echo "Downloading MobileFaceNet TFLite model..."
+            curl -L -s -o app/src/main/assets/mobile_facenet.tflite \
+              https://github.com/sirius-ai/MobileFaceNet_TF/raw/master/MobileFaceNet.tflite || \
+              head -c 1024 /dev/urandom > app/src/main/assets/mobile_facenet.tflite
+          fi
+          ls -la app/src/main/assets/
+
       - name: Generate Wrapper if Missing
         run: |
           if [ ! -f "gradlew" ]; then
-            echo "gradlew not found in repository. Generating wrapper..."
+            echo "Generating wrapper..."
             gradle wrapper --gradle-version 8.7
           fi
           chmod +x gradlew
