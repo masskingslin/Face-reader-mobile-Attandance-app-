@@ -15,7 +15,7 @@ jobs:
   build:
     name: Build Debug APK
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -32,13 +32,13 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Ensure Assets Folder & Download MobileFaceNet Model
+      - name: Ensure Assets & Model Exist
         run: |
           mkdir -p app/src/main/assets
           if [ ! -f "app/src/main/assets/mobile_facenet.tflite" ]; then
-            echo "Downloading MobileFaceNet model..."
+            echo "Fetching MobileFaceNet model..."
             curl -L -s -o app/src/main/assets/mobile_facenet.tflite \
-              https://github.com/sirius-ai/MobileFaceNet_TF/raw/master/MobileFaceNet.tflite || \
+              https://raw.githubusercontent.com/sirius-ai/MobileFaceNet_TF/master/MobileFaceNet.tflite || \
               head -c 1024 /dev/urandom > app/src/main/assets/mobile_facenet.tflite
           fi
 
@@ -49,13 +49,14 @@ jobs:
           fi
           chmod +x gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Compile and Package Debug APK
+        run: ./gradlew assembleDebug --stacktrace --console=plain
 
-      - name: Upload Debug APK
+      - name: Upload Debug APK Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: FaceSync-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 7
+          if-no-files-found: warn
