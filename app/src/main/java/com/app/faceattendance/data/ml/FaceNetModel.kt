@@ -4,8 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import com.app.faceattendance.data.local.UserEntity
 import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.gpu.CompatibilityList
-import org.tensorflow.lite.gpu.GpuDelegate
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -26,18 +24,12 @@ class FaceNetModel(context: Context) : AutoCloseable {
     }
 
     private var interpreter: Interpreter
-    private var gpuDelegate: GpuDelegate? = null
     private val enrolledUsers = ConcurrentHashMap<String, Pair<UserEntity, FloatArray>>()
 
     init {
         val options = Interpreter.Options().apply {
-            val compat = CompatibilityList()
-            if (compat.isDelegateSupportedOnThisDevice) {
-                gpuDelegate = GpuDelegate(compat.bestOptionsForThisDevice)
-                addDelegate(gpuDelegate)
-            } else {
-                setNumThreads(4)
-            }
+            setNumThreads(4)
+            setUseNNAPI(false)
         }
         interpreter = Interpreter(loadModel(context, "mobile_facenet.tflite"), options)
     }
@@ -112,6 +104,5 @@ class FaceNetModel(context: Context) : AutoCloseable {
 
     override fun close() {
         interpreter.close()
-        gpuDelegate?.close()
     }
 }
