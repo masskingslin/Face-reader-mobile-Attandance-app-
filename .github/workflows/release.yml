@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   build-and-release:
-    name: Build Signed Binaries & Publish Release
+    name: Build Binaries & Publish Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -37,47 +37,32 @@ jobs:
       - name: Generate Wrapper if Missing
         run: |
           if [ ! -f "gradlew" ]; then
-            echo "gradlew not found in repository. Generating wrapper..."
+            echo "gradlew not found. Generating wrapper..."
             gradle wrapper --gradle-version 8.7
           fi
           chmod +x gradlew
 
-      - name: Decode Keystore from Secrets
-        env:
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-        run: |
-          if [ -n "$SIGNING_KEY" ]; then
-            echo "$SIGNING_KEY" | base64 --decode > app/keystore.jks
-          else
-            echo "WARNING: SIGNING_KEY secret is not set."
-          fi
-
-      - name: Build Signed Release APK & Bundle
-        env:
-          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          ALIAS: ${{ secrets.ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      - name: Build Release APK & Bundle (AAB)
         run: ./gradlew assembleRelease bundleRelease --stacktrace
 
       - name: Organize Artifacts
         run: |
           TAG_NAME="${GITHUB_REF_NAME:-v1.0.0}"
-          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
-            mv app/build/outputs/apk/release/app-release.apk \
-               app/build/outputs/apk/release/FaceAttendance-${TAG_NAME}.apk
-          fi
-          if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
-            mv app/build/outputs/bundle/release/app-release.aab \
-               app/build/outputs/bundle/release/FaceAttendance-${TAG_NAME}.aab
-          fi
+          
+          # Find and copy generated APK
+          find app/build/outputs/apk/release -name "*.apk" -exec cp {} FaceAttendance-${TAG_NAME}.apk \;
+          
+          # Find and copy generated AAB
+          find app/build/outputs/bundle/release -name "*.aab" -exec cp {} FaceAttendance-${TAG_NAME}.aab \;
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            app/build/outputs/apk/release/FaceAttendance-*.apk
-            app/build/outputs/bundle/release/FaceAttendance-*.aab
+            FaceAttendance-*.apk
+            FaceAttendance-*.aab
           name: "Release ${{ github.ref_name }}"
+          tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           draft: false
           prerelease: false
