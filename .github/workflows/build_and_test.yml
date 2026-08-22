@@ -36,27 +36,25 @@ jobs:
         run: |
           mkdir -p app/src/main/assets
           if [ ! -f "app/src/main/assets/mobile_facenet.tflite" ]; then
-            echo "Downloading MobileFaceNet TFLite model..."
             curl -L -s -o app/src/main/assets/mobile_facenet.tflite \
               https://github.com/sirius-ai/MobileFaceNet_TF/raw/master/MobileFaceNet.tflite || \
               head -c 1024 /dev/urandom > app/src/main/assets/mobile_facenet.tflite
           fi
-          ls -la app/src/main/assets/
 
       - name: Generate Wrapper if Missing
         run: |
           if [ ! -f "gradlew" ]; then
-            echo "Generating wrapper..."
             gradle wrapper --gradle-version 8.7
           fi
           chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --stacktrace --info
 
       - name: Upload Debug APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: attendance-app-debug
+          name: FaceSync-debug
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 7
