@@ -50,6 +50,7 @@ jobs:
 
       - name: Build Debug APK
         run: |
+          set -o pipefail
           ./gradlew assembleDebug --stacktrace --console=plain 2>&1 | tee build_output.log
         continue-on-error: false
 
