@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "kids-drawing-app"
+rootProject.name = "Face-reader-mobile-Attandance-app-"
 include(":app")
