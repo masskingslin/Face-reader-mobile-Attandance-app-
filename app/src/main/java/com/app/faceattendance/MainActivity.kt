@@ -38,6 +38,27 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // --- Crash logger: catches crashes and saves them for next launch ---
+        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
+            val sw = java.io.StringWriter()
+            throwable.printStackTrace(java.io.PrintWriter(sw))
+            getSharedPreferences("crash_prefs", MODE_PRIVATE)
+                .edit()
+                .putString("last_crash", sw.toString())
+                .apply()
+            android.os.Process.killProcess(android.os.Process.myPid())
+        }
+
+        val crashPrefs = getSharedPreferences("crash_prefs", MODE_PRIVATE)
+        val lastCrash = crashPrefs.getString("last_crash", null)
+        if (lastCrash != null) {
+            crashPrefs.edit().remove("last_crash").apply()
+            val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("crash log", lastCrash))
+            Toast.makeText(this, "Crash log copied to clipboard — paste it to Claude", Toast.LENGTH_LONG).show()
+        }
+        // --- end crash logger ---
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
         }
