@@ -32,11 +32,10 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Ensure Assets & Model Exist
+      - name: Ensure Assets Folder & TFLite Model
         run: |
           mkdir -p app/src/main/assets
           if [ ! -f "app/src/main/assets/mobile_facenet.tflite" ]; then
-            echo "Fetching MobileFaceNet model..."
             curl -L -s -o app/src/main/assets/mobile_facenet.tflite \
               https://raw.githubusercontent.com/sirius-ai/MobileFaceNet_TF/master/MobileFaceNet.tflite || \
               head -c 1024 /dev/urandom > app/src/main/assets/mobile_facenet.tflite
@@ -49,14 +48,22 @@ jobs:
           fi
           chmod +x gradlew
 
-      - name: Compile and Package Debug APK
-        run: ./gradlew assembleDebug --stacktrace --console=plain
+      - name: Build Debug APK
+        run: |
+          ./gradlew assembleDebug --stacktrace --console=plain 2>&1 | tee build_output.log
+        continue-on-error: false
+
+      - name: Show Compiler Errors on Failure
+        if: failure()
+        run: |
+          echo "================ COMPILER ERROR OUTPUT ================"
+          grep -E "(e: file|AAPT: error|FAILURE: Build failed)" -B 2 -A 5 build_output.log || tail -n 50 build_output.log
+          echo "========================================================"
 
       - name: Upload Debug APK Artifact
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: FaceSync-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 7
-          if-no-files-found: warn
