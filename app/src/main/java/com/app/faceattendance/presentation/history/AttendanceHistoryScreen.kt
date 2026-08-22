@@ -101,7 +101,7 @@ fun AttendanceHistoryScreen(
                         Text(label)
                     },
                     leadingIcon = {
-                        Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
                     },
                     trailingIcon = {
                         if (state.selectedDateMillis != null) {
