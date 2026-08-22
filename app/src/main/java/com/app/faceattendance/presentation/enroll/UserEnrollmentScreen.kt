@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -164,7 +164,7 @@ fun UserEnrollmentScreen(
                     .height(50.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.Default.Camera, contentDescription = null)
+                Icon(Icons.Default.CameraAlt, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Capture & Enroll Template")
             }
