@@ -36,6 +36,7 @@ jobs:
         run: |
           mkdir -p app/src/main/assets
           if [ ! -f "app/src/main/assets/mobile_facenet.tflite" ]; then
+            echo "Downloading MobileFaceNet model..."
             curl -L -s -o app/src/main/assets/mobile_facenet.tflite \
               https://github.com/sirius-ai/MobileFaceNet_TF/raw/master/MobileFaceNet.tflite || \
               head -c 1024 /dev/urandom > app/src/main/assets/mobile_facenet.tflite
@@ -49,12 +50,12 @@ jobs:
           chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --info
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload Debug APK
-        if: success()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: FaceSync-debug
+          name: FaceSync-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           retention-days: 7
