@@ -15,6 +15,9 @@ interface AttendanceDao {
     @Query("SELECT * FROM users ORDER BY name ASC")
     suspend fun getAllUsers(): List<UserEntity>
 
+    @Query("SELECT * FROM users ORDER BY name ASC")
+    fun getAllUsersFlow(): Flow<List<UserEntity>>
+
     @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
     suspend fun getUserById(userId: String): UserEntity?
 
