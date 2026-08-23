@@ -83,27 +83,58 @@ class MainActivity : ComponentActivity() {
                             faceNetModel = faceNet,
                             onAttendancePunched = { userId, name, type, frame ->
                                 lifecycleScope.launch(Dispatchers.IO) {
-                                    val uri = GalleryStorageManager.saveAttendanceImage(
-                                        this@MainActivity,
-                                        frame,
-                                        userId,
-                                        type.name
-                                    )
-                                    val record = AttendanceRecordEntity(
-                                        userId = userId,
-                                        userName = name,
-                                        type = type.name,
-                                        imageUri = uri.toString()
-                                    )
-                                    dao.insertAttendance(record)
+                                    try {
+                                        val lastRecord = dao.getLastRecordForUser(userId)
 
-                                    withContext(Dispatchers.Main) {
-                                        feedbackManager.notifyPunchSuccess(userName = name, punchType = type.name)
-                                        Toast.makeText(
+                                        if (lastRecord?.type.equals(type.name, ignoreCase = true)) {
+                                            withContext(Dispatchers.Main) {
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    "⚠️ $name is already Punched ${type.name}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            }
+                                            return@launch
+                                        }
+
+                                        val uri = GalleryStorageManager.saveAttendanceImage(
                                             this@MainActivity,
-                                            "Attendance recorded for $name (${type.name})",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                            frame,
+                                            userId,
+                                            type.name
+                                        )
+
+                                        val record = AttendanceRecordEntity(
+                                            userId = userId,
+                                            userName = name,
+                                            type = type.name,
+                                            imageUri = uri?.toString() ?: ""
+                                        )
+                                        dao.insertAttendance(record)
+
+                                        withContext(Dispatchers.Main) {
+                                            feedbackManager.notifyPunchSuccess(userName = name, punchType = type.name)
+                                            Toast.makeText(
+                                                this@MainActivity,
+                                                "✅ Punch ${type.name} Verified — $name",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    } catch (e: Exception) {
+                                        val sw = java.io.StringWriter()
+                                        e.printStackTrace(java.io.PrintWriter(sw))
+                                        getSharedPreferences("crash_prefs", MODE_PRIVATE)
+                                            .edit()
+                                            .putString("last_crash", "PUNCH FLOW ERROR:\n" + sw.toString())
+                                            .apply()
+
+                                        withContext(Dispatchers.Main) {
+                                            Toast.makeText(
+                                                this@MainActivity,
+                                                "⚠️ Could not save attendance. Please try again.",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
                                     }
                                 }
                             },
