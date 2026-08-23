@@ -33,11 +33,14 @@ import java.util.*
 fun AttendanceHistoryScreen(
     viewModel: AttendanceHistoryViewModel,
     onExportCsv: () -> Unit,
+    onExportPdf: () -> Unit,
+    onExportExcel: () -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
+    var showExportMenu by remember { mutableStateOf(false) }
 
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = state.selectedDateMillis ?: System.currentTimeMillis()
@@ -53,8 +56,36 @@ fun AttendanceHistoryScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onExportCsv) {
-                        Icon(Icons.Default.Share, contentDescription = "Export CSV Backup")
+                    Box {
+                        IconButton(onClick = { showExportMenu = true }) {
+                            Icon(Icons.Default.Share, contentDescription = "Export & Share")
+                        }
+                        DropdownMenu(
+                            expanded = showExportMenu,
+                            onDismissRequest = { showExportMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Share as CSV") },
+                                onClick = {
+                                    showExportMenu = false
+                                    onExportCsv()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Share as PDF") },
+                                onClick = {
+                                    showExportMenu = false
+                                    onExportPdf()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Share as Excel") },
+                                onClick = {
+                                    showExportMenu = false
+                                    onExportExcel()
+                                }
+                            )
+                        }
                     }
                 }
             )
