@@ -140,6 +140,16 @@ class MainActivity : ComponentActivity() {
                                     BackupManager.exportAndShareCsv(this@MainActivity, dao)
                                 }
                             },
+                            onExportPdf = {
+                                lifecycleScope.launch {
+                                    BackupManager.exportAndSharePdf(this@MainActivity, dao)
+                                }
+                            },
+                            onExportExcel = {
+                                lifecycleScope.launch {
+                                    BackupManager.exportAndShareExcel(this@MainActivity, dao)
+                                }
+                            },
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
