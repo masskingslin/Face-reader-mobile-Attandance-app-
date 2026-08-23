@@ -14,7 +14,8 @@ data class FaceBoxUI(
     val name: String?,
     val isMatched: Boolean,
     val frameWidth: Int,
-    val frameHeight: Int
+    val frameHeight: Int,
+    val debugScoreLabel: String? = null
 )
 
 class FaceRecognitionAnalyzer(
@@ -64,13 +65,22 @@ class FaceRecognitionAnalyzer(
                 val embedding = faceNet.getFaceEmbedding(faceCrop)
                 val match = faceNet.findMatch(embedding, threshold = 0.72f)
 
+                // --- DEBUG: compute raw best score regardless of threshold ---
+                val debugPair = faceNet.debugBestScore(embedding)
+                val debugLabel = if (debugPair != null) {
+                    "DEBUG: best=${debugPair.first} score=${"%.3f".format(debugPair.second)} enrolled=${faceNet.enrolledCount()}"
+                } else {
+                    "DEBUG: no enrolled users (count=${faceNet.enrolledCount()})"
+                }
+
                 onFaceAnalyzed(
                     FaceBoxUI(
                         rect = primaryFace.boundingBox,
                         name = match?.user?.name,
                         isMatched = match != null,
                         frameWidth = frameWidth,
-                        frameHeight = frameHeight
+                        frameHeight = frameHeight,
+                        debugScoreLabel = debugLabel
                     )
                 )
 
