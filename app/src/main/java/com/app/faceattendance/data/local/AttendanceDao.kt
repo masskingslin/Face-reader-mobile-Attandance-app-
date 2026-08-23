@@ -30,6 +30,9 @@ interface AttendanceDao {
     @Query("SELECT * FROM attendance_records WHERE timestamp >= :sinceTimestamp ORDER BY timestamp DESC")
     suspend fun getRecentAttendanceList(sinceTimestamp: Long): List<AttendanceRecordEntity>
 
+    @Query("SELECT * FROM attendance_records WHERE userId = :userId ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getLastRecordForUser(userId: String): AttendanceRecordEntity?
+
     @Query("SELECT imageUri FROM attendance_records WHERE timestamp < :cutoffTimestamp")
     suspend fun getExpiredImageUris(cutoffTimestamp: Long): List<String>
 
