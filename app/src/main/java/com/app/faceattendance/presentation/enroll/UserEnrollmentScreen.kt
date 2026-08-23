@@ -150,8 +150,15 @@ fun UserEnrollmentScreen(
                         if (face != null) {
                             val crop = ImageUtils.cropFaceBitmap(bmp, face.boundingBox)
                             val emb = faceNetModel.getFaceEmbedding(crop)
-                            val embString = emb.joinToString(",")
 
+                            // --- Check if this face already belongs to someone else ---
+                            val existingMatch = faceNetModel.findMatch(emb, threshold = 0.72f)
+                            if (existingMatch != null && !existingMatch.user.id.equals(userId.trim(), ignoreCase = true)) {
+                                statusText = "⚠️ This face is already enrolled as \"${existingMatch.user.name}\" (ID: ${existingMatch.user.id}). Cannot enroll the same person twice."
+                                return@addOnSuccessListener
+                            }
+
+                            val embString = emb.joinToString(",")
                             val newUser = UserEntity(userId.trim(), userName.trim(), embString)
                             onUserEnrolled(newUser)
                         } else {
