@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Icon
@@ -50,7 +51,8 @@ fun CameraScreen(
     faceNetModel: FaceNetModel,
     onAttendancePunched: (userId: String, name: String, type: PunchMode, frame: Bitmap) -> Unit,
     onNavigateToHistory: () -> Unit,
-    onNavigateToEnroll: () -> Unit
+    onNavigateToEnroll: () -> Unit,
+    onNavigateToManageUsers: () -> Unit
 ) {
     AutoBrightnessEffect(lowLightThresholdLux = 15f, restoreThresholdLux = 40f)
 
@@ -157,11 +159,20 @@ fun CameraScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = onNavigateToEnroll,
-                    modifier = Modifier.background(Color.Black.copy(0.6f), RoundedCornerShape(12.dp))
-                ) {
-                    Icon(Icons.Default.PersonAdd, contentDescription = "Enroll Employee", tint = Color.White)
+                Row {
+                    IconButton(
+                        onClick = onNavigateToEnroll,
+                        modifier = Modifier.background(Color.Black.copy(0.6f), RoundedCornerShape(12.dp))
+                    ) {
+                        Icon(Icons.Default.PersonAdd, contentDescription = "Enroll Employee", tint = Color.White)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = onNavigateToManageUsers,
+                        modifier = Modifier.background(Color.Black.copy(0.6f), RoundedCornerShape(12.dp))
+                    ) {
+                        Icon(Icons.Default.Groups, contentDescription = "Manage Employees", tint = Color.White)
+                    }
                 }
 
                 Surface(color = Color.Black.copy(0.65f), shape = RoundedCornerShape(20.dp)) {
@@ -238,21 +249,6 @@ fun CameraScreen(
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                         )
                     }
-                }
-            }
-
-            detectedFace?.debugScoreLabel?.let { label ->
-                Spacer(modifier = Modifier.height(6.dp))
-                Surface(
-                    color = Color.Black.copy(alpha = 0.7f),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = label,
-                        color = Color.Yellow,
-                        fontSize = 11.sp,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
                 }
             }
         }
