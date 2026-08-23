@@ -85,27 +85,6 @@ class FaceNetModel(context: Context) : AutoCloseable {
         } else null
     }
 
-    // --- DEBUG: returns the best raw score + name regardless of threshold ---
-    fun debugBestScore(embedding: FloatArray): Pair<String, Float>? {
-        var bestName: String? = null
-        var highestScore = -1.0f
-
-        for ((_, pair) in enrolledUsers) {
-            var dot = 0.0f
-            for (i in embedding.indices) {
-                dot += embedding[i] * pair.second[i]
-            }
-            if (dot > highestScore) {
-                highestScore = dot
-                bestName = pair.first.name
-            }
-        }
-
-        return bestName?.let { it to highestScore }
-    }
-
-    fun enrolledCount(): Int = enrolledUsers.size
-
     private fun l2Normalize(v: FloatArray): FloatArray {
         var sum = 0f
         for (x in v) sum += x * x
