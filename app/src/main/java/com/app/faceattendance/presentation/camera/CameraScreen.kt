@@ -240,6 +240,21 @@ fun CameraScreen(
                     }
                 }
             }
+
+            detectedFace?.debugScoreLabel?.let { label ->
+                Spacer(modifier = Modifier.height(6.dp))
+                Surface(
+                    color = Color.Black.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = label,
+                        color = Color.Yellow,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
         }
 
         Surface(
