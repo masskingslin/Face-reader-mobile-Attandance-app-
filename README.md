@@ -1,130 +1,107 @@
-Face Attendance Android
-An on-device, offline-first facial recognition attendance system built with Kotlin, Jetpack Compose, CameraX, ML Kit, TensorFlow Lite (MobileFaceNet), and Room DB.
-Features
- * Automatic Facial Recognition: On-device identity matching using a 192-dimensional MobileFaceNet embedding model with Cosine Similarity scoring.
- * Active Liveness Detection: Anti-spoofing challenge-response state machine requiring interactive blinks or smiles before verifying attendance.
- * IN / OUT Punch Tracking: One-tap toggle for clocking in or out with automatic photo capture.
- * Scoped Storage Gallery Isolation: Automatically saves punch snapshot images to Pictures/AttendanceApp/ via the Android MediaStore API.
- * 90-Day Rolling Data Retention: SQLite database (Room) with an automated WorkManager background job that runs every 24 hours to purge expired records and image files older than 90 days.
- * CSV Export & Backup: Generates formatted attendance reports on demand and exports them through the Android System Share Sheet using FileProvider.
- * Hardware Integration:
-   * Ambient light monitoring via SensorManager that triggers automatic full-screen brightness boosting in low-light environments.
-   * Spoken audio confirmations via Android TextToSpeech.
-   * Success/Error tactile feedback via multi-stage VibrationEffect waveforms.
- * Automated CI/CD: Complete GitHub Actions workflows for linting, unit testing, and building signed release APKs and Android App Bundles (.aab).
-System Architecture
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                             PRESENTATION LAYER                              │
-│   CameraPreviewScreen    │    AttendanceHistoryScreen   │ UserEnrollScreen  │
-│   • CameraX Viewport     │    • 90-Day Filter Engine    │ • Template Capture│
-│   • Bounding Box Canvas  │    • User / Date Search      │ • Float Embedding │
-│   • Liveness Guidance    │    • Snapshot Modal Dialog   │   Serialization   │
-│   • IN / OUT Switcher    │    • CSV Export Action Sheet │                   │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │ StateFlow / Events
-┌──────────────────────────────────────▼──────────────────────────────────────┐
-│                           DOMAIN & ML VISION LAYER                          │
-│   ┌────────────────────────┐ ┌──────────────────────┐ ┌──────────────────┐  │
-│   │   Face Detection       │ │  Active Liveness     │ │ MobileFaceNet    │  │
-│   │   (Google ML Kit)      │─▶  (Blink / Smile FSM) ─▶│ (TFLite 192-d)   │  │
-│   └────────────────────────┘ └──────────────────────┘ └──────────────────┘  │
-└──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │
-┌──────────────────────────────────────▼──────────────────────────────────────┐
-│                       DATA & HARDWARE SERVICES LAYER                        │
-│  ┌───────────────────────┐  ┌──────────────────────┐  ┌──────────────────┐  │
-│  │   Room SQLite DB      │  │  MediaStore Service  │  │ Device Feedback  │  │
-│  │   • User Templates    │  │  • Pictures/         │  │ • TTS Engine     │  │
-│  │   • Attendance Logs   │  │    AttendanceApp/    │  │ • Waveform Haptic│  │
-│  │   • 90-Day Auto Prune │  │  • Scoped Storage    │  │ • Light Sensor   │  │
-│  └───────────────────────┘  └──────────────────────┘  └──────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────┘
+# FaceSync — Face Recognition Attendance App
 
-Tech Stack & Dependencies
- * Language: Kotlin 1.9+
- * UI Framework: Jetpack Compose & Material 3
- * Camera Pipeline: CameraX (Core, Camera2, Lifecycle, View 1.3.4)
- * Vision & ML:
-   * Google ML Kit Face Detection (16.1.7)
-   * TensorFlow Lite Runtime + GPU Delegate (2.14.0)
- * Local Database: Room SQLite with Kotlin Coroutines & Flow (2.6.1)
- * Image Loading: Coil Compose (2.6.0)
- * Background Tasks: AndroidX WorkManager (2.9.0)
-Directory Structure
-face-attendance-android/
-├── .github/
-│   └── workflows/
-│       ├── build_and_test.yml          # CI: PR & Branch build verification
-│       └── release.yml                 # CD: Tagged release signer (APK + AAB)
-├── app/
-│   ├── proguard-rules.pro              # R8 minification rules for TFLite/ML Kit
-│   ├── build.gradle.kts
-│   └── src/
-│       └── main/
-│           ├── assets/
-│           │   └── mobile_facenet.tflite # 112x112 MobileFaceNet model file
-│           ├── res/xml/
-│           │   └── file_paths.xml      # FileProvider cache paths for CSV exports
-│           ├── AndroidManifest.xml
-│           └── java/com/app/faceattendance/
-│               ├── AttendanceApplication.kt
-│               ├── MainActivity.kt
-│               ├── data/
-│               │   ├── backup/BackupManager.kt
-│               │   ├── local/
-│               │   │   ├── AppDatabase.kt
-│               │   │   ├── AttendanceDao.kt
-│               │   │   ├── AttendanceRecordEntity.kt
-│               │   │   └── UserEntity.kt
-│               │   ├── ml/
-│               │   │   ├── FaceNetModel.kt
-│               │   │   ├── FaceRecognitionAnalyzer.kt
-│               │   │   ├── ImageUtils.kt
-│               │   │   └── LivenessDetector.kt
-│               │   └── storage/GalleryStorageManager.kt
-│               ├── presentation/
-│               │   ├── camera/
-│               │   │   ├── AutoBrightnessEffect.kt
-│               │   │   └── CameraScreen.kt
-│               │   ├── enroll/UserEnrollmentScreen.kt
-│               │   ├── feedback/FeedbackManager.kt
-│               │   └── history/
-│               │       ├── AttendanceHistoryScreen.kt
-│               │       └── AttendanceHistoryViewModel.kt
-│               └── worker/DataPruningWorker.kt
-├── build.gradle.kts
-└── settings.gradle.kts
+**Capture • Sync • Secure**
 
-Setup & Installation
-1. Prerequisites
- * Android Studio Iguana (2023.2.1) or newer
- * JDK 17
- * Android Device or Emulator running Android 8.0 (API level 26) or higher with a working camera
-2. Clone the Repository
-git clone https://github.com/<your-username>/face-attendance-android.git
-cd face-attendance-android
+FaceSync is an Android attendance tracking app that uses on-device face recognition with liveness detection to verify employee punch in/out, without needing a server or internet connection.
 
-3. Add the TFLite Model Asset
-Ensure the MobileFaceNet weight file is placed inside the assets directory:
-app/src/main/assets/mobile_facenet.tflite
+---
 
-4. Build and Run
-# Debug build and install to connected device
-./gradlew installDebug
+## Features
 
-GitHub Actions Release Automation
-To generate signed releases via GitHub Actions:
- * Base64-encode your release keystore:
-   base64 -w 0 my-release-key.jks > keystore_base64.txt
+- **Face Recognition** — On-device face matching using a MobileFaceNet TFLite model (192-dimension embeddings), so no photos or biometric data ever leave the device.
+- **Liveness Detection** — Randomized blink or smile challenge before every punch, to prevent spoofing with a photo or video.
+- **Punch In / Punch Out** — Simple toggle to record attendance type, with duplicate-punch protection (can't punch IN twice in a row, or OUT twice in a row).
+- **Voice Feedback** — Spoken confirmation on every successful punch ("Welcome, [Name]" / "See you, [Name]") via Android Text-to-Speech.
+- **Employee Enrollment** — Register new employees by capturing their face and storing a local embedding.
+- **Attendance History** — Search, filter by date or punch type, and review photo snapshots for every recorded punch.
+- **Export & Share** — Export attendance records as CSV, PDF, or Excel (XLSX), and share directly via WhatsApp, email, or any installed app.
+- **Auto Brightness** — Automatically boosts screen brightness in low light for better face detection.
+- **Local Photo Backup** — Attendance snapshots are saved to the device gallery (`Pictures/AttendanceApp`) for audit purposes.
 
- * In your GitHub repository, navigate to Settings → Secrets and variables → Actions and add:
-   * SIGNING_KEY: Paste the base64 string from keystore_base64.txt.
-   * KEY_STORE_PASSWORD: Keystore password.
-   * ALIAS: Key alias name.
-   * KEY_PASSWORD: Key alias password.
- * Trigger an automated release by pushing a version tag:
-   git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
+---
 
- * The workflow will build, sign, and upload FaceAttendance-v1.0.0.apk, FaceAttendance-v1.0.0.aab, and the ProGuard mapping-v1.0.0.txt file directly to the GitHub Releases page.
-License
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| UI | Jetpack Compose, Material 3 |
+| Face Detection | Google ML Kit Face Detection |
+| Face Recognition | TensorFlow Lite (MobileFaceNet, 192-d embeddings) |
+| Camera | CameraX |
+| Local Database | Room |
+| Image Loading | Coil |
+| Navigation | Jetpack Navigation Compose |
+| Background Work | WorkManager |
+| Excel Export | fastexcel |
+| PDF Export | Android `PdfDocument` API |
+| Language | Kotlin |
+
+---
+
+## Requirements
+
+- Android Studio (latest stable)
+- JDK 17
+- Android SDK 35 (compile & target)
+- Minimum SDK: 26 (Android 8.0+)
+- A physical or emulated device with a front-facing camera
+
+---
+
+## Project Structure
+
+```
+app/src/main/java/com/app/faceattendance/
+├── MainActivity.kt
+├── AttendanceApplication.kt
+├── data/
+│   ├── local/          # Room entities & DAO
+│   ├── ml/              # Face recognition, liveness detection, image analysis
+│   ├── storage/         # Gallery image storage
+│   └── backup/          # CSV / PDF / Excel export
+└── presentation/
+    ├── camera/           # Main punch-in/out camera screen
+    ├── enroll/            # Employee enrollment screen
+    ├── history/           # Attendance history & filtering
+    └── feedback/          # Voice feedback (TTS)
+```
+
+---
+
+## Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/masskingslin/Face-reader-mobile-Attandance-app-.git
+   ```
+2. Open in Android Studio.
+3. Ensure `app/src/main/assets/mobile_facenet.tflite` contains a valid MobileFaceNet model (192-d output). This file is required for face recognition to function.
+4. Build and run on a device with a front-facing camera.
+
+### Required Permissions
+
+| Permission | Purpose |
+|---|---|
+| `CAMERA` | Face capture for enrollment and attendance |
+
+Camera permission is requested at runtime on first launch.
+
+---
+
+## CI/CD
+
+This repo uses GitHub Actions (`.github/workflows/build_and_test.yml`) to automatically build a debug APK on every push to `main`, `master`, or `develop`, and on pull requests. The workflow:
+
+1. Sets up JDK 17 and Gradle
+2. Ensures the TFLite model asset is present
+3. Builds the debug APK (`assembleDebug`)
+4. Uploads the APK as a build artifact
+
+---
+
+## How It Works
+
+1. **Enrollment** — An employee's face is captured, an embedding is generated via the TFLite model, and stored locally in Room.
+2. **Recognition** — On the camera screen, ML Kit detects a face in each frame; if a face is present, a liveness challenge (blink or smile) is triggered.
+3. **Verification** — Once liveness passes, the face embedding is compared against all enrolled users via cosine similarity. A match above the similarity threshold (0.72) triggers a punch.
+4. **Recording** — The punch is checked against the employee's last record to prevent duplicates, then saved to the local database along with a photo snapshot.
