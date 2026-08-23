@@ -18,6 +18,7 @@ import com.app.faceattendance.data.backup.BackupManager
 import com.app.faceattendance.data.local.AttendanceRecordEntity
 import com.app.faceattendance.data.storage.GalleryStorageManager
 import com.app.faceattendance.presentation.camera.CameraScreen
+import com.app.faceattendance.presentation.enroll.ManageUsersScreen
 import com.app.faceattendance.presentation.enroll.UserEnrollmentScreen
 import com.app.faceattendance.presentation.history.AttendanceHistoryScreen
 import com.app.faceattendance.presentation.history.AttendanceHistoryViewModel
@@ -38,7 +39,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // --- Crash logger: catches crashes and saves them for next launch ---
         Thread.setDefaultUncaughtExceptionHandler { _, throwable ->
             val sw = java.io.StringWriter()
             throwable.printStackTrace(java.io.PrintWriter(sw))
@@ -57,7 +57,6 @@ class MainActivity : ComponentActivity() {
             clipboard.setPrimaryClip(android.content.ClipData.newPlainText("crash log", lastCrash))
             Toast.makeText(this, "Crash log copied to clipboard — paste it to Claude", Toast.LENGTH_LONG).show()
         }
-        // --- end crash logger ---
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -139,7 +138,8 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             onNavigateToHistory = { navController.navigate("history") },
-                            onNavigateToEnroll = { navController.navigate("enroll") }
+                            onNavigateToEnroll = { navController.navigate("enroll") },
+                            onNavigateToManageUsers = { navController.navigate("manageUsers") }
                         )
                     }
 
@@ -158,6 +158,15 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             },
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable("manageUsers") {
+                        ManageUsersScreen(
+                            dao = dao,
+                            faceNetModel = faceNet,
+                            onNavigateToEnroll = { navController.navigate("enroll") },
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
